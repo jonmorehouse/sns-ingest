@@ -3,22 +3,28 @@ package main
 import (
 	"log"
 	"net/http"
-	"github.com/julienschmidt/httprouter"
 )
 
 type Server struct {
-	router *httprouter.Router
+	middleware *Middleware
 }
 
-func InitServer() (*Server) {
+func NewServer() (*Server) {
 	server := Server{}
-	server.router = httprouter.New()
+	server.middleware = NewMiddleware()
 
 	return &server
 }
 
+func temp(w http.ResponseWriter, r *http.Request) {
+	// will be replaced by a message handler in the future
+	w.Write([]byte("ok"))
+}
+
 func (s *Server) serve() {
-	err := http.ListenAndServe(config.port, s.router)
+	finalHandler := http.HandlerFunc(temp)
+
+	err := http.ListenAndServe(config.port, s.middleware.handler(finalHandler))
 	if err != nil {
 		log.Fatal("Server Error:", err)
 	}

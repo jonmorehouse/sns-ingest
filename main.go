@@ -3,7 +3,7 @@ package main
 func main() {
 	ParseFlags()
 
-	server := InitServer()
+	server := NewServer()
 	server.serve()
 }
 

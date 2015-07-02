@@ -7,24 +7,20 @@ import (
 
 type Server struct {
 	middleware *Middleware
+	handler *MessageHandler
 }
 
 func NewServer() (*Server) {
 	server := Server{}
 	server.middleware = NewMiddleware()
+	server.handler = NewMessageHandler()
 
 	return &server
 }
 
-func temp(w http.ResponseWriter, r *http.Request) {
-	// will be replaced by a message handler in the future
-	w.Write([]byte("ok"))
-}
-
 func (s *Server) serve() {
-	finalHandler := http.HandlerFunc(temp)
+	err := http.ListenAndServe(config.port, s.middleware.handler(s.handler))
 
-	err := http.ListenAndServe(config.port, s.middleware.handler(finalHandler))
 	if err != nil {
 		log.Fatal("Server Error:", err)
 	}

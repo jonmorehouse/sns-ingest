@@ -11,15 +11,30 @@ type Middleware struct {
 }
 
 func NewMiddleware() (*Middleware) {
-	middleware := Middleware{}
-	middleware.validators = []ValidatorFunc{}
+	m := Middleware{}
+	m.validators = []ValidatorFunc{m.hostnameValidator, m.basicAuthValidator, m.contentTypeValidator}
 
-	return &middleware
+	return &m
+}
+
+func (m *Middleware) hostnameValidator(rw http.ResponseWriter, r *http.Request) (*error) {
+
+	return nil
+}
+
+func (m *Middleware) contentTypeValidator(rw http.ResponseWriter, r *http.Request) (*error) {
+
+	return nil
+}
+
+func (m *Middleware) basicAuthValidator(rw http.ResponseWriter, r *http.Request) (*error) {
+
+	return nil
 }
 
 func (m *Middleware) handler(next http.Handler) (http.Handler) {
 
+
 	return next
 }
-
 

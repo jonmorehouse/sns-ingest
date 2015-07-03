@@ -1,11 +1,12 @@
 package main
 
 import (
-	"testing"
+	"regexp"
 	"net/http"
+	"testing"
 	"net/http/httptest"
 	"github.com/stretchr/testify/assert"
-	"regexp"
+	"github.com/stretchr/testify/mock"
 )
 
 func SetupMiddlewareTest() (http.ResponseWriter, *http.Request, *Middleware) {
@@ -78,16 +79,37 @@ func TestSnsHeaderValidator(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+type BasicAuthMock struct {
+	mock.Mock
+}
+
+func (b *BasicAuthMock) verify(username, password string) (bool) {
+	args := b.Called(username, password)
+	return args.Bool(0)
+}
+
 func TestBasicAuthValidator(t *testing.T) {
+	mock := new(BasicAuthMock)
+	mock.On("verify", "username", "password").Return(true)
+	mock.On("verify", "bad_username", "bad_password").Return(false)
+
 	originalUsers := config.users
-	config.users = []BasicAuthUser{{"username", "password"}}
+	config.users = []User{mock}
 
-	assert.Equal(t, config.users[0].username, "username")
+	rw, r, m := SetupMiddlewareTest()
+	r.SetBasicAuth("username", "password")
+	err := m.basicAuthValidator(rw, r)
+	assert.Nil(t, err)
 
+	r.SetBasicAuth("bad_username", "bad_password")
+	err = m.basicAuthValidator(rw, r)
+
+	mock.AssertExpectations(t)
 	config.users = originalUsers
 }
 
 func TestUriValidator(t *testing.T) {
+
 
 }
 

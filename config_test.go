@@ -29,13 +29,21 @@ func TestParseUsers(t *testing.T) {
 	config.parseUsers()
 	
 	assert.Equal(t, 3, len(config.users))
-	assert.Equal(t, config.users[0].username, "username")
-	assert.Equal(t, config.users[1].username, "username")
-	assert.Equal(t, config.users[2].username, "username2")
 
-	assert.Equal(t, config.users[0].password, "password")
-	assert.Equal(t, config.users[1].password, "password2")
-	assert.Equal(t, config.users[2].password, "password")
+	user, ok := config.users[0].(BasicAuthUser)
+	assert.True(t, ok)
+	assert.Equal(t, user.username, "username")
+	assert.Equal(t, user.password, "password")
+
+	user, ok = config.users[1].(BasicAuthUser)
+	assert.True(t, ok)
+	assert.Equal(t, user.username, "username")
+	assert.Equal(t, user.password, "password2")
+
+	user, ok = config.users[2].(BasicAuthUser)
+	assert.True(t, ok)
+	assert.Equal(t, user.username, "username2")
+	assert.Equal(t, user.password, "password")
 
 	config.usersString = originalUsersString
 }
@@ -45,5 +53,18 @@ func TestBasicAuthUserVerify(t *testing.T) {
 
 	assert.True(t, user.verify("username", "password"))
 	assert.False(t, user.verify("username", "bad password"))
+}
+
+func TestParseAllowedQueues(t *testing.T) {
+	assert.Equal(t, len(config.allowedQueues), 0)
+
+	config.allowedQueuesString = "queue_1,queue_2"
+	config.parseAllowedQueues()
+	assert.Equal(t, len(config.allowedQueues), 2)
+	assert.Equal(t, config.allowedQueues[0], "queue_1")
+	assert.Equal(t, config.allowedQueues[1], "queue_2")
+
+	config.allowedQueuesString = ""
+	config.parseAllowedQueues()
 }
 

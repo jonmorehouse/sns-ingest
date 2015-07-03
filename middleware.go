@@ -89,7 +89,6 @@ func (m *Middleware) basicAuthValidator(rw http.ResponseWriter, r *http.Request)
 }
 
 func (m *Middleware) uriValidator(rw http.ResponseWriter, r *http.Request) (error) {
-	// checks valid queue names
 
 	return nil
 }

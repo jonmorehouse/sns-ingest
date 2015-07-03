@@ -38,11 +38,17 @@ func TestHostValidator(t *testing.T) {
 	regex, _ := regexp.Compile("^localhost$")
 	config.allowedHosts = []*regexp.Regexp{regex}
 
+	r.URL.Host = "localhost"
 	r.Host = "localhost"
 	err := m.hostValidator(rw, r)
 	assert.Nil(t, err)
 
 	r.Host = "not a valid host"
+	err = m.hostValidator(rw, r)
+	assert.NotNil(t, err)
+
+	r.Host = "localhost"
+	r.URL.Host = "not a valid host" 
 	err = m.hostValidator(rw, r)
 	assert.NotNil(t, err)
 

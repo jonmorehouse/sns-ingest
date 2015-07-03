@@ -34,15 +34,18 @@ func (m *Middleware) httpMethodValidator(rw http.ResponseWriter, r *http.Request
 }
 
 func (m *Middleware) hostValidator(rw http.ResponseWriter, r *http.Request) (error) {
-	var found bool
 	for _, regex := range config.allowedHosts {
-		found = regex.MatchString(r.Host)
-		if found {
-			return nil
+		hosts := []string{r.Host, r.URL.Host}
+
+		for _, host := range hosts {
+			found := regex.MatchString(host)
+			if !found {
+				return fmt.Errorf("Invalid host: %s", host)
+			}
 		}
 	}
 
-	return errors.New("Invalid host name")
+	return nil
 }
 
 func (m *Middleware) snsHeaderValidator(rw http.ResponseWriter, r *http.Request) (error) {
@@ -104,7 +107,7 @@ func (m *Middleware) uriValidator(rw http.ResponseWriter, r *http.Request) (erro
 
 func (m *Middleware) handler(next http.Handler) (http.Handler) {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		//var err error
+		var err error
 
 		//for _, validator := range m.validators
 

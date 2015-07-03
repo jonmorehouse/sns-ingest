@@ -109,9 +109,16 @@ func (m *Middleware) handler(next http.Handler) (http.Handler) {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		var err error
 
-		//for _, validator := range m.validators
+		for _, validator := range m.validators {
+			err = validator(rw, r)
+			if err != nil {
+				rw.WriteHeader(400)
+				rw.Write([]byte(err.Error()))
+				return
+			}
+		}
 
-		m.hostValidator(rw, r)
+		next.ServeHTTP(rw, r)
 	})
 }
 

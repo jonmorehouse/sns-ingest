@@ -4,12 +4,13 @@ import (
 	"regexp"
 	"net/http"
 	"testing"
+	"fmt"
 	"net/http/httptest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
-func SetupMiddlewareTest() (http.ResponseWriter, *http.Request, *Middleware) {
+func SetupMiddlewareTest() (*httptest.ResponseRecorder, *http.Request, *Middleware) {
 	responseWriter := httptest.NewRecorder()
 	request, _ := http.NewRequest("POST", "/", nil)
 	middleware := NewMiddleware()
@@ -130,5 +131,54 @@ func TestUriValidator(t *testing.T) {
 	r, _ = http.NewRequest("POST", "http://localhost/queue/bad_queue/bad_queue", nil)
 	err = m.uriValidator(rw, r)
 	assert.NotNil(t, err)
+}
+
+type MockValidator struct {
+	mock.Mock 
+}
+
+func (m *MockValidator) validator(rw http.ResponseWriter, r *http.Request) (error) {
+	args := m.Called(rw, r)
+	return args.Error(0)
+}
+
+type MockHandler struct {
+	mock.Mock
+}
+
+func (m *MockHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	m.Called(rw, r)
+}
+
+func TestHandlerSuccess(t *testing.T) {
+	rw, r, m := SetupMiddlewareTest()
+	validator := new(MockValidator)
+	validator.On("validator", rw, r).Return(nil)
+
+	next := new(MockHandler)
+	next.On("ServeHTTP", rw, r).Return()
+
+	m.validators = []ValidatorFunc{validator.validator}
+	handler := m.handler(next)
+	handler.ServeHTTP(rw, r)
+	
+	validator.AssertExpectations(t)
+	next.AssertExpectations(t)
+}
+
+func TestHandlerFailure(t *testing.T) {
+	rw, r, m := SetupMiddlewareTest()
+	validator := new(MockValidator)
+	validator.On("validator", rw, r).Return(fmt.Errorf("mock error"))
+
+	next := new(MockHandler)
+	m.validators = []ValidatorFunc{validator.validator}
+	handler := m.handler(next)
+	handler.ServeHTTP(rw, r)
+
+	validator.AssertExpectations(t)
+	next.AssertExpectations(t)
+	assert.Equal(t, rw.Code, 400)
+	assert.Equal(t, rw.Body.String(), "mock error")
 }
 

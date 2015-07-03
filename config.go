@@ -30,7 +30,7 @@ func (c *Config) parseAllowedHosts() {
 	}
 }
 
-func ParseFlags() { 
+func ParseFlags() {
 	flag.StringVar(&config.port, "port", ":8000", "Port to listen on")
 	flag.StringVar(&config.allowedHostsString, "allowed_hosts", "localhost", "Comma delimited list of acceptable host names")
 

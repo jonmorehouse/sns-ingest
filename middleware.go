@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"errors"
 	"net/http"
+	"regexp"
 )
 
 type ValidatorFunc func(http.ResponseWriter, *http.Request) (error)
@@ -89,6 +90,14 @@ func (m *Middleware) basicAuthValidator(rw http.ResponseWriter, r *http.Request)
 }
 
 func (m *Middleware) uriValidator(rw http.ResponseWriter, r *http.Request) (error) {
+	regex, _ := regexp.Compile(`[^/]+`)
+	queues := regex.FindAllString(r.URL.Path, -1)
+
+	for _, queue := range queues {
+		if found := config.allowedQueues[queue]; !found {
+			return fmt.Errorf("Invalid queue name %s", queue)
+		}
+	}
 
 	return nil
 }

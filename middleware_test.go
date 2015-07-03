@@ -109,8 +109,20 @@ func TestBasicAuthValidator(t *testing.T) {
 }
 
 func TestUriValidator(t *testing.T) {
+	rw, r, m := SetupMiddlewareTest()
+	config.allowedQueues = map[string]bool{
+		"queue": true,
+		"queue_2": true,
+		"queue_3": true,
+	}
 
+	r, _ = http.NewRequest("POST", "http://localhost/queue/queue_2/queue_3", nil)
+	err := m.uriValidator(rw, r)
 
+	assert.Nil(t, err)
+
+	r, _ = http.NewRequest("POST", "http://localhost/queue/bad_queue/bad_queue", nil)
+	err = m.uriValidator(rw, r)
+	assert.NotNil(t, err)
 }
-
 

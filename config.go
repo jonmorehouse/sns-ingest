@@ -32,7 +32,7 @@ type Config struct {
 	users []User
 	usersString string
 	allowedQueuesString string
-	allowedQueues []string
+	allowedQueues map[string]bool
 }
 
 var config *Config = &Config{}
@@ -52,7 +52,12 @@ func (c *Config) parseAllowedHosts() {
 }
 
 func (c *Config) parseAllowedQueues() {
-	config.allowedQueues = strings.Split(config.allowedQueuesString, ",")
+	allowedQueues := strings.Split(config.allowedQueuesString, ",")
+	
+	config.allowedQueues = make(map[string]bool)
+	for _, queue := range allowedQueues {
+		config.allowedQueues[queue] = true
+	}
 }
 
 func (c *Config) parseUsers() {
@@ -75,6 +80,7 @@ func ParseFlags() {
 	flag.StringVar(&config.allowedQueuesString, "queues", "", "comma delimited string of nsq queue names")
 
 	flag.Parse()
+
 	config.parseAllowedHosts()
 	config.parseUsers()
 	config.parseAllowedQueues()

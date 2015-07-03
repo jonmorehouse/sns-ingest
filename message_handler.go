@@ -14,6 +14,7 @@ func (mh *MessageHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	message := MessageWithRequest(r)
 	err := message.Validate()
 
+	// handles the result of the messages acceptance
 	if err != nil {
 		// handle error
 		// return 400

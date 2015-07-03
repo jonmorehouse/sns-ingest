@@ -12,7 +12,7 @@ type BasicAuthUser struct {
 	password string
 }
 
-func (u *BasicAuthUser) verify(username string, password string) (bool) {
+func (u *BasicAuthUser) verify(username, password string) (bool) {
 
 	if u.username == username && u.password == password {
 		return true
@@ -25,6 +25,7 @@ type Config struct {
 	port string
 	allowedHostsString string
 	allowedHosts []*regexp.Regexp
+	basicAuthEnabled bool
 	users []BasicAuthUser
 	usersString string
 }
@@ -54,6 +55,8 @@ func (c *Config) parseUsers() {
 
 		config.users = append(config.users, basicAuthUser)
 	}
+
+	config.basicAuthEnabled = len(config.users) > 0
 }
 
 func ParseFlags() {

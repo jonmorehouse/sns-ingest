@@ -70,9 +70,22 @@ func (m *Middleware) snsHeaderValidator(rw http.ResponseWriter, r *http.Request)
 }
 
 func (m *Middleware) basicAuthValidator(rw http.ResponseWriter, r *http.Request) (error) {
+	if !config.basicAuthEnabled {
+		return nil
+	}
 
+	username, password, ok := r.BasicAuth()
+	if !ok {
+		return errors.New("Basic Auth required")
+	}
 
-	return nil
+	for _, basicAuth := range config.users {
+		if basicAuth.verify(username, password) {
+			return nil
+		}
+	}
+
+	return errors.New("Unable to authenticate user")
 }
 
 func (m *Middleware) uriValidator(rw http.ResponseWriter, r *http.Request) (error) {

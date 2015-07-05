@@ -11,22 +11,21 @@ func NewMessageHandler() (*MessageHandler) {
 }
 
 func (mh *MessageHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	message := MessageWithRequest(r)
-	err := message.Validate()
+	//message := MessageWithRequest(r)
+	//err := message.Validate()
+	//err := nil
 
-	// handles the result of the messages acceptance
-	if err != nil {
-		// handle error
-		// return 400
-		http.NotFound(rw, r)
-	} else {
-		rw.Write([]byte("Message accepted and acknowledged"))
-	}
+	//// handles the result of the messages acceptance
+	//if err != nil {
+		//rw.WriteHeader(400)
+		//rw.Write([]byte(err.Error()))
+	//} else {
+		//rw.WriteHeader(204)
+	//}
 }
 
-func MessageWithRequest(r *http.Request) (*Message) {
+//func MessageWithRequest(r *http.Request) (*Message) {
 
-	return nil
-}
 
+//}
 

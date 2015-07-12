@@ -1,41 +1,16 @@
 package main
 
-const (
-	SUBSCRIPTION = iota
-	UNSUBSCRIPTION = iota
-	NOTIFICATION = iota
-)
+type Message interface {
+	// verify encapsulates the signature creation 
+	// returns the output of the signature verification step
+	verify() (error)
 
-// signature mixin is responsible for taking the signature string and verifying it 
-type SignatureMixin struct {
-	// keeps a certificate object alive
-	certificate *Certificate,
-
+	// handle takes the proper action
+	// either feeds to nsq/webcallback or handles subscription
+	handle() (error)
 }
 
-func (s *SignatureMixin) downloadCertURL(certURL string) (error) {
-	// this is run in a go-process behind the scenes
-	// handles caching seamlessly
-	//s.certificate = CertificateWithURL(certURL)
-	return nil
-}
-
-func (s *SignatureMixin) signMessage(message string) (error) {
-	// base64 encode message
-	base64EncodedMessage := base64.base64(message)
-	pubKey := s.certificate.getPublicKey()
-
-	// this is going to be cpu bound, probably not worth splitting into a go routine
-	return pubKey.sign(base64EncodedMessage)
-}
-
-func (s *SignatureMixin) verifySignature(expectedSignature, signature string) (error) {
-
-	return nil
-}
-
-
-type SubscriptionNotification struct {
+type Subscription struct {
 	Type,
 	MessageID,
 	Token,
@@ -46,11 +21,24 @@ type SubscriptionNotification struct {
 	Signature,
 	SigningCertURL string
 	url string
-
-	SignatureMixin
 }
 
-type MessageNotification struct {
+func NewSubscription() (*Subscription, error) {
+
+	return &Subscription{}, nil
+}
+
+func (*Subscription) verify() (error) {
+
+	return nil
+}
+
+func (*Subscription) handle() (error) {
+
+	return nil
+}
+
+type Unsubscription struct {
 	Message,
 	MessageId,
 	Subject,
@@ -58,7 +46,45 @@ type MessageNotification struct {
 	TopicArn,
 	UnSubscribeURL,
 	Type string	    
-
-	SignatureMixin
 }
+
+func NewUnsubscription() (*Unsubscription, error) {
+
+	return &Unsubscription{}, nil
+}
+
+func (*Unsubscription) verify() (error) {
+
+	return nil
+}
+
+func (*Unsubscription) handle() (error) {
+
+	return nil
+}
+
+type Notification struct {
+	Message,
+	MessageId,
+	Subject,
+	Timestamp,
+	TopicArn,
+	UnSubscribeURL,
+	Type string	    
+}
+
+func NewNotification() (*Notification, error) {
+
+	return &Notification{}, nil
+}
+
+func (n *Notification) verify() (error) {
+	return nil
+}
+
+func (n *Notification) handle() (error) {
+
+	return nil
+}
+
 

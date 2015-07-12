@@ -7,13 +7,13 @@ import (
 
 type Server struct {
 	middleware *Middleware
-	handler *MessageHandler
+	handler *HttpMessageServer
 }
 
 func NewServer() (*Server) {
 	server := Server{}
 	server.middleware = NewMiddleware()
-	server.handler = NewMessageHandler()
+	server.handler = NewHttpMessageServer()
 
 	return &server
 }

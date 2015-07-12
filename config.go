@@ -1,10 +1,11 @@
 package main
 
 import (
-	"log"
+	"errors"
 	"flag"
 	"strings"
 	"regexp"
+	"log"
 )
 
 type User interface {
@@ -37,40 +38,53 @@ type Config struct {
 
 var config *Config = &Config{}
 
-func (c *Config) parseAllowedHosts() {
+func (c *Config) parseAllowedHosts() (error) {
 	pieces := strings.Split(config.allowedHostsString, ",")
 
 	for _, piece := range pieces {
 		regex, err := regexp.Compile(piece)
 
 		if err != nil {
-			log.Fatal(err)
+			return err
 		} else {
 			config.allowedHosts = append(config.allowedHosts, regex) 
 		}
 	}
+
+	return nil
 }
 
-func (c *Config) parseAllowedQueues() {
+func (c *Config) parseAllowedQueues() (error) {
 	allowedQueues := strings.Split(config.allowedQueuesString, ",")
 	
 	config.allowedQueues = make(map[string]bool)
 	for _, queue := range allowedQueues {
 		config.allowedQueues[queue] = true
 	}
+
+	return nil
 }
 
-func (c *Config) parseUsers() {
-	users := strings.Split(config.usersString, ",")
+func (c *Config) parseUsers() (error) {
+	if config.usersString == "" {
+		return nil
+	}
 
+	users := strings.Split(config.usersString, ",")
 	for _, user := range users {
 		pieces := strings.Split(user, ":")
-		basicAuthUser := BasicAuthUser{username: pieces[0], password: pieces[1]}
+		if len(pieces) < 2 {
+			err := errors.New("invalid user:password string set")
+			return err
+		}
 
+		basicAuthUser := BasicAuthUser{username: pieces[0], password: pieces[1]}
 		config.users = append(config.users, basicAuthUser)
 	}
 
 	config.basicAuthEnabled = len(config.users) > 0
+
+	return nil
 }
 
 func ParseFlags() {
@@ -81,8 +95,13 @@ func ParseFlags() {
 
 	flag.Parse()
 
-	config.parseAllowedHosts()
-	config.parseUsers()
-	config.parseAllowedQueues()
+	var err error
+	parsers := []func()(error){config.parseAllowedHosts, config.parseUsers, config.parseAllowedQueues}
+	for _, parser := range parsers {
+		err = parser()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 }
 

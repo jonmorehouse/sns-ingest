@@ -67,9 +67,8 @@ func (mh MessageHandler) build(r *http.Request) (Message, error) {
 			message = &Unsubscription{}
 	}
 
-	var x Notification
 	decoder := json.NewDecoder(r.Body)
-	err = decoder.Decode(&x)
+	err = decoder.Decode(message)
 
 	//decoder
 	return message, err

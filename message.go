@@ -11,8 +11,8 @@ type Message interface {
 }
 
 type Subscription struct {
-	Type,
-	MessageID,
+	Type string `json:"Type"`
+	MessageID, 
 	Token,
 	TopicArn,
 	SubscribeURL,
@@ -54,6 +54,7 @@ func (*Unsubscription) handle() (error) {
 }
 
 type Notification struct {
+	TypeA string `json:"Type"`
 	Message,
 	MessageId,
 	Subject,

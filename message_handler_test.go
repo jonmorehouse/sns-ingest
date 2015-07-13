@@ -20,21 +20,23 @@ func TestHandlerBuildsCorrectMessage(t *testing.T) {
 		{"x-amz-sns-message-type", "Notification", false, &Notification{}},
 		{"x-amz-sns-message-type", "UnsubscribeConfirmation", false, &Unsubscription{}},
 		{"x-amz-sns-message-type", "SubscriptionConfirmation", false, &Subscription{}},
+		{"x-amz-not-sns-message-type", "value", true, &Notification{}},
 	}
 
 	for _, testCase := range testCases {
-		body := bytes.NewBuffer([]byte("{}"))
+		body := bytes.NewBuffer([]byte("{\"Type\":\"test\"}"))
 		request, _ := http.NewRequest("POST", "/", body)
 
 		request.Header.Set(testCase.headerKey, testCase.headerValue)
 		message, err := messageHandler.build(request)
 
-		assert.NotNil(t, message)
 		if !testCase.shouldErr {
+			assert.NotNil(t, message)
 			assert.Nil(t, err)
 			assert.IsType(t, message, testCase.expected)
 		} else {
 			assert.NotNil(t, err)
+			assert.Nil(t, message)
 		}
 	}
 }

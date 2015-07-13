@@ -70,7 +70,6 @@ func (mh MessageHandler) build(r *http.Request) (Message, error) {
 	decoder := json.NewDecoder(r.Body)
 	err = decoder.Decode(message)
 
-	//decoder
 	return message, err
 }
 

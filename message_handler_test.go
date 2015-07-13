@@ -45,7 +45,7 @@ type MockMessageHandler struct {
 	mock.Mock
 }
 
-func (m MockMessageHandler) successHandler(rw http.ResponseWriter) {
+func (m *MockMessageHandler) successHandler(rw http.ResponseWriter) {
 	m.Called(rw)
 }
 
@@ -89,26 +89,62 @@ func TestServerHandlesBuildError(t *testing.T) {
 	mockMessage.AssertExpectations(t)
 }
 
-func TestServerCallsMessageHandlers(t *testing.T) {
-	responseWriter := httptest.NewRecorder()
-	request, _ := http.NewRequest("POST", "/", nil)
-	
-	mockMessage := &MockMessage{}
-	mockMessage.On("handle").Return(nil)
-	mockMessage.On("verify").Return(nil)
+func TestServerHandlesMessagesAndErrors(t *testing.T) {
+	mockError := fmt.Errorf("mock error")
+	var testCases = []struct {
+		verifyReturn error
+		handleReturn error
+		handleCalled bool
+		shouldSucceed bool
+	}{
+		{nil, mockError, true, false},
+		{mockError, nil, false, false},
+		{nil, nil, true, true},
+	}
 
-	mockHandler := MockMessageHandler{}
-	mockHandler.On("build", request).Return(mockMessage, nil)
-	mockHandler.On("successHandler", request).Return()
+	for _, testCase := range testCases {
+		responseWriter := httptest.NewRecorder()
+		request, _ := http.NewRequest("POST", "/", nil)
+		mockMessage := &MockMessage{}
+		mockHandler := MockMessageHandler{}
+		messageServer := HttpMessageServer{handler: &mockHandler}
 
-	messageServer := HttpMessageServer{handler: &mockHandler}
-	messageServer.ServeHTTP(responseWriter, request)
+		mockMessage.On("verify").Return(testCase.verifyReturn)
+		// handle isn't called if verify errs
+		if testCase.handleCalled {
+			mockMessage.On("handle").Return(testCase.handleReturn)
+		}
 
-	mockHandler.AssertExpectations(t)
-	mockMessage.AssertExpectations(t)
+		mockHandler.On("build", request).Return(mockMessage, nil)
+		if testCase.shouldSucceed {
+			mockHandler.On("successHandler", responseWriter).Return()
+		} else {
+			mockHandler.On("errorHandler", responseWriter, mockError).Return()
+		}
+		
+		messageServer.ServeHTTP(responseWriter, request)
+		mockMessage.AssertExpectations(t) 
+		mockHandler.AssertExpectations(t)
+	}
 }
 
-func TestServerHandlersMessageHandlerError(t *testing.T) {
+func TestHandlerSuccessHandler(t *testing.T) {
+	messageHandler := MessageHandler{}
+	responseWriter := httptest.NewRecorder()
 
+	messageHandler.successHandler(responseWriter)
+
+	assert.Equal(t, responseWriter.Code, 200)
+	assert.Equal(t, responseWriter.Body.String(), "")
+}
+
+func TestHandlerErrorHandler(t *testing.T) {
+	mockError := fmt.Errorf("error")
+	messageHandler := MessageHandler{}
+	responseWriter := httptest.NewRecorder()
+
+	messageHandler.errorHandler(responseWriter, mockError)
+	assert.Equal(t, responseWriter.Code, 400)
+	assert.Equal(t, responseWriter.Body.String(), mockError.Error())
 }
 

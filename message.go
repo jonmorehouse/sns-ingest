@@ -23,11 +23,6 @@ type Subscription struct {
 	url string
 }
 
-func NewSubscription() (*Subscription, error) {
-
-	return &Subscription{}, nil
-}
-
 func (*Subscription) verify() (error) {
 
 	return nil
@@ -48,11 +43,6 @@ type Unsubscription struct {
 	Type string	    
 }
 
-func NewUnsubscription() (*Unsubscription, error) {
-
-	return &Unsubscription{}, nil
-}
-
 func (*Unsubscription) verify() (error) {
 
 	return nil
@@ -71,11 +61,6 @@ type Notification struct {
 	TopicArn,
 	UnSubscribeURL,
 	Type string	    
-}
-
-func NewNotification() (*Notification, error) {
-
-	return &Notification{}, nil
 }
 
 func (n *Notification) verify() (error) {

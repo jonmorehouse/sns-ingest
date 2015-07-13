@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"errors"
+	"encoding/json"
 )
 
 type HttpMessageHandler interface {
@@ -22,7 +23,6 @@ func NewHttpMessageServer() (*HttpMessageServer) {
 }
 
 func (m *HttpMessageServer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-
 	message, err := m.handler.build(r)
 	if err != nil {
 		m.handler.errorHandler(rw, err)
@@ -53,21 +53,25 @@ func (m MessageHandler) errorHandler(rw http.ResponseWriter, err error) {
 }
 
 func (mh MessageHandler) build(r *http.Request) (Message, error) {
-	messageType := r.Header.Get("x-amz-sns-message-type")
 	var err error
 	var message Message
 
-	switch messageType {
+	switch messageType := r.Header.Get("x-amz-sns-message-type"); messageType {
 		default:
 			err = errors.New("Invalid x-amz-sns-message-type header")
 		case "Notification":
-			message, err = NewNotification()
+			message = &Notification{}
 		case "SubscriptionConfirmation":
-			message, err = NewSubscription()
+			message = &Subscription{}
 		case "UnsubscribeConfirmation":
-			message, err = NewUnsubscription()
+			message = &Unsubscription{}
 	}
 
+	var x Notification
+	decoder := json.NewDecoder(r.Body)
+	err = decoder.Decode(&x)
+
+	//decoder
 	return message, err
 }
 

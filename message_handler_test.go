@@ -4,41 +4,39 @@ import (
 	"testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"bytes"
 	"net/http"
 	"net/http/httptest"
 	"fmt"
 )
 
-func TestBuildsCorrectMessageType(t *testing.T) {
-	request, _ := http.NewRequest("POST", "/", nil)
+func TestHandlerBuildsCorrectMessage(t *testing.T) {
 	messageHandler := &MessageHandler{}
+	testCases := []struct {
+		headerKey, headerValue string
+		shouldErr bool
+		expected Message
+	}{
+		{"x-amz-sns-message-type", "Notification", false, &Notification{}},
+		{"x-amz-sns-message-type", "UnsubscribeConfirmation", false, &Unsubscription{}},
+		{"x-amz-sns-message-type", "SubscriptionConfirmation", false, &Subscription{}},
+	}
 
-	request.Header.Set("x-amz-sns-message-type", "Notification")
-	message, err := messageHandler.build(request)
+	for _, testCase := range testCases {
+		body := bytes.NewBuffer([]byte("{}"))
+		request, _ := http.NewRequest("POST", "/", body)
 
-	assert.NotNil(t, message)
-	assert.Nil(t, err)
-	assert.IsType(t, message, &Notification{})
+		request.Header.Set(testCase.headerKey, testCase.headerValue)
+		message, err := messageHandler.build(request)
 
-	request.Header.Set("x-amz-sns-message-type", "SubscriptionConfirmation")
-	message, err = messageHandler.build(request)
-
-	assert.NotNil(t, message)
-	assert.Nil(t, err)
-	assert.IsType(t, message, &Subscription{})
-
-	request.Header.Set("x-amz-sns-message-type", "UnsubscribeConfirmation")
-	message, err = messageHandler.build(request)
-
-	assert.NotNil(t, message)
-	assert.Nil(t, err)
-	assert.IsType(t, message, &Unsubscription{})
-
-	request.Header.Set("x-amz-sns-message-type", "null")
-	message, err = messageHandler.build(request)
-
-	assert.NotNil(t, err)
-	assert.Nil(t, message)
+		assert.NotNil(t, message)
+		if !testCase.shouldErr {
+			assert.Nil(t, err)
+			assert.IsType(t, message, testCase.expected)
+		} else {
+			assert.NotNil(t, err)
+		}
+	}
 }
 
 type MockMessageHandler struct {
